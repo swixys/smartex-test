@@ -1,0 +1,83 @@
+version: '3.1'
+services:
+
+
+  # Database
+  database:
+    image: mariadb:latest
+    restart: always
+    environment:
+      MARIADB_DATABASE: wp
+      MARIADB_ROOT_PASSWORD: password
+    volumes:
+     - ./docker/data/db:/docker-entrypoint-initdb.d
+  
+  # Database backup
+  database-backup:
+    image: mariadb:latest
+    depends_on:
+      - database
+    environment:
+      MARIADB_DATABASE: wp
+      MARIADB_ROOT_PASSWORD: password
+    command: >
+      bash -c "
+        sleep 5
+        chmod 755 /opt/backup.sh
+        /opt/backup.sh
+      "
+    volumes:
+     - ./docker/data/db:/tmp/db
+     - ./docker/data/bin:/opt
+
+  # WP
+  wordpress:
+    image: "wordpress:latest"
+    depends_on:
+      - database
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: password
+    links:
+      - database
+    ports:
+      - "80:80"
+    volumes:
+      - wordpress:/var/www/html
+      - ./docker/adminer:/var/www/html/adminer/
+      - ./docker/data/wp/plugins:/var/www/html/wp-content/plugins
+      - ./docker/data/wp/uploads:/var/www/html/wp-content/uploads
+      - ./template:/var/www/html/wp-content/themes/silence/
+
+  # WP cli
+  cli:
+    image: wordpress:cli
+    user: "33:33"
+    depends_on:
+      - database
+      - wordpress
+    links:
+      - database
+    environment:
+      WORDPRESS_DB_HOST: database
+      WORDPRESS_DB_NAME: wp
+      WORDPRESS_DB_USER: root
+      WORDPRESS_DB_PASSWORD: password
+      HOME: /tmp
+    command: >
+      bash -c "
+        sleep 15
+        chmod 755 /opt/install.sh
+        /opt/install.sh
+      "
+    volumes:
+      - wordpress:/var/www/html
+      - ./docker/data/wp/plugins:/var/www/html/wp-content/plugins
+      - ./docker/data/wp/uploads:/var/www/html/wp-content/uploads
+      - ./template:/var/www/html/wp-content/themes/silence/:ro
+      - ./docker/data/bin:/opt
+
+volumes:
+  wordpress:

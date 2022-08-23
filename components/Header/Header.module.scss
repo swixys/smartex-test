@@ -1,0 +1,28 @@
+.head{
+  background: #305B51;
+  display: flex;
+  padding: 50px 0;
+  position: relative;
+  nav{
+    margin-left: auto;
+    ul{
+      display: flex;
+      margin: 0;
+      li{
+        list-style-type: none;
+        margin-right: 75px;
+        color: white;
+        a{
+          text-transform: uppercase;
+        }
+      }
+    }
+  }
+  .logo{
+    position: absolute;
+    top: 50%;
+    left: 60px;
+    transform: translateY(-50%);
+  }
+}
+
